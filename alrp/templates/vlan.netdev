@@ -1,0 +1,6 @@
+[NetDev]
+Name=dev-vlan{{vlanId}}
+Kind=vlan
+
+[VLAN]
+Id={{vlanId}}

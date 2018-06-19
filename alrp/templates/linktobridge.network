@@ -1,0 +1,5 @@
+[Match]
+Name={{item}}
+
+[Network]
+Bridge={{hostvars[inventory_hostname].interfaces[item]["bridge"]}}

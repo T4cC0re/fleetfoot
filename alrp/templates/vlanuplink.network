@@ -1,0 +1,8 @@
+[Match]
+Name={{item}}
+
+[Network]
+{% for vlanId in hostvars[inventory_hostname].interfaces[item]["vlans"] %}
+VLAN={{vlanId}}
+{% endfor %}
+LinkLocalAddressing=no

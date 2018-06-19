@@ -1,0 +1,5 @@
+[Match]
+Name=vlan{{vlanId}}
+
+[Network]
+Bridge=br-vlan{{vlanId}}

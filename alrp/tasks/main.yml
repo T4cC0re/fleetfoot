@@ -1,0 +1,125 @@
+---
+- name: Install some basic packages
+  become: yes
+  pacman:
+    name: python,openssh,sudo,curl,wget,tar,unzip
+    update_cache: yes
+
+- name: Make sure we have a 'wheel' group
+  become: yes
+  group:
+    name: wheel
+    state: present
+  tags:
+    - usermanagement
+
+- name: Allow 'wheel' group to have passwordless sudo
+  become: yes
+  lineinfile:
+    dest: /etc/sudoers.d/wheel
+    create: yes
+    state: present
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: visudo -cf %s
+  tags:
+    - usermanagement
+
+- name: Ensure accounts and ensure membership in wheel group
+  become: yes
+  user:
+    name: "{{ item }}"
+    groups: wheel
+    append: yes
+    state: present
+    shell: /bin/bash
+    createhome: yes
+  with_items: "{{ sudoers }}"
+  tags:
+    - usermanagement
+
+- name: Create user home
+  file:
+    group: "{{item}}"
+    owner: "{{item}}"
+    path: "/home/{{item}}"
+    mode: 0750
+    state: directory
+  become: true
+  with_items: "{{ sudoers }}"
+  tags:
+    - usermanagement
+
+- name: Add authorized keys to users
+  become: yes
+  authorized_key:
+    key: "https://github.com/{{ item }}.keys"
+    user: "{{ item }}"
+    state: present
+    exclusive: False
+  with_items: "{{ sudoers }}"
+  tags:
+    - usermanagement
+
+- name: Disallow password authentication
+  become: true
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^PasswordAuthentication"
+              line="PasswordAuthentication no"
+              state=present
+  notify: restart ssh
+
+- name: Disallow root SSH access without password
+  become: true
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^PermitRootLogin"
+              line="PermitRootLogin without-password"
+              state=present
+  notify: restart ssh
+
+- name: Make sure nf_conntrack is loaded on bootup
+  become: true
+  lineinfile: dest=/etc/modules-load.d/modules.conf
+              regexp="^nf_conntrack"
+              line="nf_conntrack"
+              state=present
+              create=yes
+  notify: load nf_conntrack
+
+- name: Install vault binary (x86)
+  become: true
+  shell: "wget -qq {{ vault_download_x86 }} -O vault.zip && unzip vault.zip && mv -f vault /usr/local/bin ; rm -rf vault*"
+  args:
+    creates: /usr/local/bin/vault
+  tags:
+    - vault
+
+- name: Create /opt/scripts
+  file:
+    group: 0
+    owner: 0
+    path: /opt/scripts
+    mode: 0555
+    state: directory
+  become: true
+  when: noscripts is not defined
+  tags:
+    - scripts
+
+- name: Install scripts
+  template:
+    force: yes
+    group: 0
+    owner: 0
+    mode: 0555
+    dest: "/opt/scripts/{{ item }}"
+    src: "{{ item }}"
+  become: true
+  when: noscripts is not defined
+  with_items: "{{ scripts }}"
+  tags:
+    - scripts
+
+- include: netconfig.yml
+  tags:
+    - netconfig

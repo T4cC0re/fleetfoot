@@ -1,0 +1,4 @@
+fallback ip
+every vlan is to be a bridge. Interfaces can be attached to a bridge.
+dnsmasq for dhcp and dns? systemd-networkds dhcp does not offer that much configurability...
+requires network + openssh and python on arch linux host to bootstrap

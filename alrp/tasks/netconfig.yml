@@ -1,0 +1,36 @@
+---
+- name: Write link files
+  become: yes
+  template:
+    src: device.link
+    dest: "/home/t4cc0re/10-{{ item }}.link"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  when: hostvars[inventory_hostname].interfaces[item]["mac"] is defined
+  with_items: "{{ hostvars[inventory_hostname].interfaces }}"
+
+- name: Write vlan uplink files
+  become: yes
+  template:
+    src: vlanuplink.network
+    dest: "/home/t4cc0re/50-{{ item }}.network"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  when: hostvars[inventory_hostname].interfaces[item]["vlans"] is defined and (hostvars[inventory_hostname].interfaces[item]["vlans"] | length > 0)
+  with_items: "{{ hostvars[inventory_hostname].interfaces }}"
+
+- name: Write link-to-bridge files
+  become: yes
+  template:
+    src: linktobridge.network
+    dest: "/home/t4cc0re/50-{{ item }}.network"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  when: hostvars[inventory_hostname].interfaces[item]["bridge"] is defined
+  with_items: "{{ hostvars[inventory_hostname].interfaces }}"
