@@ -3,34 +3,71 @@
   become: yes
   template:
     src: device.link
-    dest: "/home/t4cc0re/10-{{ item }}.link"
+    dest: "{{networkd_config_root}}/10-{{ item }}.link"
     owner: root
     group: root
     force: yes
     mode: 0644
-  when: hostvars[inventory_hostname].interfaces[item]["mac"] is defined
-  with_items: "{{ hostvars[inventory_hostname].interfaces }}"
+  register: template_results
+  when: interfaces[item]["mac"] is defined
+  with_items: "{{ interfaces }}"
+
+- set_fact:
+    managed_files: "{{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
 
 - name: Write vlan uplink files
   become: yes
   template:
     src: vlanuplink.network
-    dest: "/home/t4cc0re/50-{{ item }}.network"
+    dest: "{{networkd_config_root}}/50-{{ item }}.network"
     owner: root
     group: root
     force: yes
     mode: 0644
-  when: hostvars[inventory_hostname].interfaces[item]["vlans"] is defined and (hostvars[inventory_hostname].interfaces[item]["vlans"] | length > 0)
-  with_items: "{{ hostvars[inventory_hostname].interfaces }}"
+  register: template_results
+  when: interfaces[item]["vlans"] is defined and (interfaces[item]["vlans"] | length > 0)
+  with_items: "{{ interfaces }}"
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
 
 - name: Write link-to-bridge files
   become: yes
   template:
     src: linktobridge.network
-    dest: "/home/t4cc0re/50-{{ item }}.network"
+    dest: "{{networkd_config_root}}/50-{{ item }}.network"
     owner: root
     group: root
     force: yes
     mode: 0644
-  when: hostvars[inventory_hostname].interfaces[item]["bridge"] is defined
-  with_items: "{{ hostvars[inventory_hostname].interfaces }}"
+  register: template_results
+  when: interfaces[item]["bridge"] is defined
+  with_items: "{{ interfaces }}"
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
+
+- name: Write vlan network files
+  become: yes
+  template:
+    src: vlan.network
+    dest: "{{networkd_config_root}}/50-vlan{{item.key}}.network"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  register: template_results
+  #when: item.key = 8
+  with_dict: "{{ vlans }}"
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
+
+#TODO: write the rest of the configs...
+
+- debug:
+    var: managed_files
+    verbosity: 0
+
+- name: Delete unmanaged files
+  command: "find {{networkd_config_root}} -type f -not -wholename {{ managed_files | join(' -not -wholename ') }} -delete"

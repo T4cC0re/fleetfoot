@@ -1,5 +1,5 @@
 [Match]
-Name=vlan{{vlanId}}
+Name=vlan{{item.key}}
 
 [Network]
-Bridge=br-vlan{{vlanId}}
+Bridge={{item.value.name}}
