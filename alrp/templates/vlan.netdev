@@ -1,6 +1,6 @@
 [NetDev]
-Name=vlan{{item}}
+Name=vlan{{item.key}}
 Kind=vlan
 
 [VLAN]
-Id={{item}}
+Id={{item.key}}

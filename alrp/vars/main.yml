@@ -4,4 +4,4 @@ sudoers:
   - t4cc0re
 scripts: []
 vault_download_x86: https://releases.hashicorp.com/vault/0.10.2/vault_0.10.2_linux_amd64.zip
-networkd_config_root: /home/t4cc0re/test
+networkd_config_root: /etc/systemd/network

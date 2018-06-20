@@ -1,5 +1,10 @@
 [Match]
-Name={{item}}
+Name={{item.key}}
 
 [Network]
-Bridge={{hostvars[inventory_hostname].interfaces[item]["bridge"]}}
+Bridge={{item.value.bridge}}
+{% if item.value.networkSettings is defined %}
+{% for setting in item.value.networkSettings %}
+{{setting}}
+{% endfor %}
+{% endif %}

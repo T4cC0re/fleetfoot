@@ -3,6 +3,10 @@
   become: true
   service: name=ssh state=restarted
 
+- name: restart systemd-networkd
+  become: true
+  service: name=systemd-networkd state=restarted
+
 - name: load nf_conntrack
   become: true
   modprobe:

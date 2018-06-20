@@ -1,8 +1,13 @@
 [Match]
-Name={{item}}
+Name={{item.key}}
 
 [Network]
-{% for vlanId in hostvars[inventory_hostname].interfaces[item]["vlans"] %}
-VLAN={{vlanId}}
+{% for vlanId in item.value.vlans %}
+VLAN=vlan{{vlanId}}
 {% endfor %}
 LinkLocalAddressing=no
+{% if item.value.networkSettings is defined %}
+{% for setting in item.value.networkSettings %}
+{{setting}}
+{% endfor %}
+{% endif %}

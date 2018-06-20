@@ -3,14 +3,15 @@
   become: yes
   template:
     src: device.link
-    dest: "{{networkd_config_root}}/10-{{ item }}.link"
+    dest: "{{networkd_config_root}}/10-{{ item.key }}.link"
     owner: root
     group: root
     force: yes
     mode: 0644
   register: template_results
-  when: interfaces[item]["mac"] is defined
-  with_items: "{{ interfaces }}"
+  when: item.value.mac is defined
+  with_dict: "{{ interfaces }}"
+  notify: restart ssh
 
 - set_fact:
     managed_files: "{{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -19,14 +20,15 @@
   become: yes
   template:
     src: vlanuplink.network
-    dest: "{{networkd_config_root}}/50-{{ item }}.network"
+    dest: "{{networkd_config_root}}/50-{{ item.key }}.network"
     owner: root
     group: root
     force: yes
     mode: 0644
   register: template_results
-  when: interfaces[item]["vlans"] is defined and (interfaces[item]["vlans"] | length > 0)
-  with_items: "{{ interfaces }}"
+  when: item.value.vlans is defined and (item.value.vlans | length > 0)
+  with_dict: "{{ interfaces }}"
+  notify: restart ssh
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -35,14 +37,15 @@
   become: yes
   template:
     src: linktobridge.network
-    dest: "{{networkd_config_root}}/50-{{ item }}.network"
+    dest: "{{networkd_config_root}}/50-{{ item.key }}.network"
     owner: root
     group: root
     force: yes
     mode: 0644
   register: template_results
-  when: interfaces[item]["bridge"] is defined
-  with_items: "{{ interfaces }}"
+  when: item.value.bridge is defined
+  with_dict: "{{ interfaces }}"
+  notify: restart ssh
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -57,17 +60,64 @@
     force: yes
     mode: 0644
   register: template_results
-  #when: item.key = 8
   with_dict: "{{ vlans }}"
+  notify: restart ssh
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
 
-#TODO: write the rest of the configs...
+- name: Write vlan netdev files
+  become: yes
+  template:
+    src: vlan.netdev
+    dest: "{{networkd_config_root}}/00-vlan{{item.key}}.netdev"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  register: template_results
+  with_dict: "{{ vlans }}"
+  notify: restart ssh
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
+
+- name: Write bridge netdev files
+  become: yes
+  template:
+    src: bridge.netdev
+    dest: "{{networkd_config_root}}/30-{{item.value.name}}.netdev"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  register: template_results
+  with_dict: "{{ vlans }}"
+  notify: restart ssh
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
+
+- name: Write bridge network files
+  become: yes
+  template:
+    src: bridge.network
+    dest: "{{networkd_config_root}}/30-{{item.value.name}}.network"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  register: template_results
+  with_dict: "{{ vlans }}"
+  notify: restart ssh
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
 
 - debug:
     var: managed_files
     verbosity: 0
 
 - name: Delete unmanaged files
+  become: yes
   command: "find {{networkd_config_root}} -type f -not -wholename {{ managed_files | join(' -not -wholename ') }} -delete"

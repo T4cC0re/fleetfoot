@@ -1,5 +1,5 @@
 [Match]
-MACAddress={{hostvars[inventory_hostname].interfaces[item]["mac"]}}
+MACAddress={{item.value.mac}}
 
 [Link]
-Name={{item}}
+Name={{item.key}}

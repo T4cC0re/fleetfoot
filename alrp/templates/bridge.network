@@ -1,7 +1,9 @@
 [Match]
-Name={{bridgeName}}
+Name={{item.value.name}}
 
 [Network]
-{% for setting in bridgeNetworkSettings %}
+{% if item.value.networkSettings is defined %}
+{% for setting in item.value.networkSettings %}
 {{setting}}
 {% endfor %}
+{% endif %}
