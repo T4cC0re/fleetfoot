@@ -1,0 +1,18 @@
+{% if item.match is defined %}
+[Match]
+{% for setting in item.match %}
+{{setting}}
+{% endfor %}
+{% endif %}
+{% if item.link is defined %}
+[Link]
+{% for setting in item.link %}
+{{setting}}
+{% endfor %}
+{% endif %}
+{% if item.network is defined %}
+[Network]
+{% for setting in item.network %}
+{{setting}}
+{% endfor %}
+{% endif %}

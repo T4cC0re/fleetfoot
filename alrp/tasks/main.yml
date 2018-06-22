@@ -67,7 +67,7 @@
               regexp="^PasswordAuthentication"
               line="PasswordAuthentication no"
               state=present
-  notify: restart ssh
+  notify: restart sshd
 
 - name: Disallow root SSH access without password
   become: true
@@ -75,7 +75,7 @@
               regexp="^PermitRootLogin"
               line="PermitRootLogin without-password"
               state=present
-  notify: restart ssh
+  notify: restart sshd
 
 - name: Make sure nf_conntrack is loaded on bootup
   become: true
