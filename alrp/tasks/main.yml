@@ -2,7 +2,7 @@
 - name: Install some basic packages
   become: yes
   pacman:
-    name: python,openssh,sudo,curl,wget,tar,unzip
+    name: python,openssh,sudo,curl,wget,tar,unzip,avahi,nss-mdns,dnsmasq
     update_cache: yes
 
 - name: Make sure we have a 'wheel' group
