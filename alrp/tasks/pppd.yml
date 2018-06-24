@@ -1,0 +1,52 @@
+---
+
+- name: Write pppd peer
+  become: yes
+  template:
+    src: pppdpeer
+    dest: "/etc/ppp/peers/alrp"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+
+- name: Write pppd chap-secrets
+  become: yes
+  template:
+    src: pppdchapsecrets
+    dest: "/etc/ppp/chap-secrets"
+    owner: root
+    group: root
+    force: yes
+    mode: 0600
+
+- name: Write pppd hook
+  become: yes
+  template:
+    src: hook.sh
+    dest: "/etc/ppp/hook.sh"
+    owner: root
+    group: root
+    force: yes
+    mode: 0755
+
+- name: Symlink to hook
+  become: yes
+  file:
+    src: "/etc/ppp/hook.sh"
+    dest: "/etc/ppp/{{ item }}.d/99-hook.sh"
+    owner: root
+    group: root
+    state: link
+  with_items:
+    - ip-down
+    - ip-up
+    - ipv6-down
+    - ipv6-up
+
+- name: enable and start PPPoE service
+  become: yes
+  systemd:
+    name: ppp@alrp
+    state: started
+    enabled: yes

@@ -1,0 +1,21 @@
+---
+
+- name: Create user home
+  file:
+    group: 0
+    owner: 0
+    path: "/var/tftp"
+    mode: 0744
+    state: directory
+  become: true
+
+- name: Write dnsmasq.conf
+  become: yes
+  template:
+    src: dnsmasq.conf
+    dest: "/etc/dnsmasq.conf"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  notify: restart dnsmasq

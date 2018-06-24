@@ -7,6 +7,10 @@
   become: true
   service: name=systemd-networkd state=restarted
 
+- name: restart dnsmasq
+  become: true
+  service: name=dnsmasq state=restarted
+
 - name: load nf_conntrack
   become: true
   modprobe:

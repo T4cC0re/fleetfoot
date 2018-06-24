@@ -1,0 +1,7 @@
+plugin rp-pppoe.so pppoe
+
+name "{{pppoe.username}}"
+defaultroute
+hide-password
+noauth
++ipv6 ipv6cp-use-ipaddr

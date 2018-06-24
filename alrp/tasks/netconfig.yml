@@ -11,7 +11,7 @@
   register: template_results
   when: item.value.mac is defined
   with_dict: "{{ interfaces }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -28,7 +28,7 @@
   register: template_results
   when: item.value.vlans is defined and (item.value.vlans | length > 0)
   with_dict: "{{ interfaces }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -45,7 +45,7 @@
   register: template_results
   when: item.value.bridge is defined
   with_dict: "{{ interfaces }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -62,7 +62,7 @@
   register: template_results
   when: item is defined
   with_dict: "{{ vlans }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -79,7 +79,7 @@
   register: template_results
   when: item is defined
   with_dict: "{{ vlans }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -96,7 +96,7 @@
   register: template_results
   when: item is defined
   with_dict: "{{ vlans }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
@@ -113,31 +113,31 @@
   register: template_results
   when: item is defined
   with_dict: "{{ vlans }}"
-#  notify: restart systemd-networkd
+  notify: restart systemd-networkd
 
 - set_fact:
     managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
 
-#- debug:
-#    var: raw
-#    verbosity: 0
-#
-#- name: Write raw files
-#  become: yes
-#  template:
-#    src: raw.networkd
-#    dest: "{{networkd_config_root}}/{{item.name}}.{{item.type}}"
-#    owner: root
-#    group: root
-#    force: yes
-#    mode: 0644
-#  register: template_results
-#  when: item is defined
-#  with_items: "{{ raw }}"
-##  notify: restart systemd-networkd
-#
-#- set_fact:
-#    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
+- debug:
+    var: raw
+    verbosity: 0
+
+- name: Write raw files
+  become: yes
+  template:
+    src: raw.networkd
+    dest: "{{networkd_config_root}}/{{ item.name | default('name') }}.{{ item.type | default('type') }}"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+  register: template_results
+  when: item is defined
+  with_items: "{{ raw | default([]) }}"
+#  notify: restart systemd-networkd
+
+- set_fact:
+    managed_files: "{{ managed_files }} + {{ template_results.results|selectattr('invocation', 'defined')|map(attribute='invocation.module_args.dest')|list }}"
 
 - debug:
     var: managed_files

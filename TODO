@@ -1,3 +1,7 @@
 every vlan is to be a bridge. Interfaces can be attached to a bridge.
-dnsmasq for dhcp and dns? systemd-networkds dhcp does not offer that much configurability...
 requires network + openssh and python on arch linux host to bootstrap
+golang daemon instead of ansible
+vpnc
+ipoib
+port-mapping
+full IPv6 support (also 4to6)

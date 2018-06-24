@@ -1,4 +1,14 @@
 ---
+- name: Write motd
+  become: yes
+  template:
+    src: motd
+    dest: "/etc/motd"
+    owner: root
+    group: root
+    force: yes
+    mode: 0644
+
 - name: Install some basic packages
   become: yes
   pacman:
@@ -123,3 +133,14 @@
 - include: netconfig.yml
   tags:
     - netconfig
+
+- include: dnsmasq.yml
+  tags:
+    - netconfig
+    - dnsmasq
+
+- include: pppd.yml
+  tags:
+    - netconfig
+    - pppd
+
