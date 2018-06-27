@@ -1,5 +1,5 @@
 ---
-# vars file for alrp
+# vars file for fleetfoot
 sudoers:
   - t4cc0re
 scripts: []

@@ -4,7 +4,7 @@
   become: yes
   template:
     src: pppdpeer
-    dest: "/etc/ppp/peers/alrp"
+    dest: "/etc/ppp/peers/fleetfoot"
     owner: root
     group: root
     force: yes
@@ -29,6 +29,8 @@
     group: root
     force: yes
     mode: 0755
+  tags:
+    - portforwarding
 
 - name: Symlink to hook
   become: yes
@@ -47,6 +49,6 @@
 - name: enable and start PPPoE service
   become: yes
   systemd:
-    name: ppp@alrp
+    name: ppp@fleetfoot
     state: started
     enabled: yes

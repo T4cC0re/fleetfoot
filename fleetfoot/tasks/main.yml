@@ -130,6 +130,12 @@
   tags:
     - scripts
 
+- name: mask lvm2-monitor
+  become: yes
+  systemd:
+    name: lvm2-monitor.service
+    masked: yes
+
 - include: netconfig.yml
   tags:
     - netconfig
