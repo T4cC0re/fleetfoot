@@ -5,3 +5,13 @@ defaultroute
 hide-password
 noauth
 +ipv6 ipv6cp-use-ipaddr
+nobsdcomp
+nodeflate
+ipcp-accept-local
+ipcp-accept-remote
+noccp
+novj
+nopcomp
+noaccomp
+default-asyncmap
+passive
