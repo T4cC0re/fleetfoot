@@ -36,7 +36,7 @@
   become: yes
   file:
     src: "/etc/ppp/hook.sh"
-    dest: "/etc/ppp/{{ item }}.d/99-hook.sh"
+    dest: "/etc/ppp/{{ item }}.d/00-firewall.sh"
     owner: root
     group: root
     state: link
