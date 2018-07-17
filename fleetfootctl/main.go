@@ -9,16 +9,7 @@ import (
 	"time"
 )
 
-var sockPath = flag.String("sockpath", "/var/run/fleetfootd.sock", "Socket to listen on")
-
-type HookData struct {
-	TTY          string `json:tty`     // Calling interface name
-	PPPName      string `json:pppname` // ppp0 etc.
-	ExternalIP   string `json:externalIP`
-	RemotePeerIP string `json:remotePeerIP`
-	Speed        int32  `json:speed`   // usually 0
-	ipparam      string `json:ipparam` // arbitrary data
-}
+var sockPath = flag.String("sockpath", "/var/run/fleetfootd.sock", "Socket to connect to")
 
 func main() {
 	flag.Parse()
