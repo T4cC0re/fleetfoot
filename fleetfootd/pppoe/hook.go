@@ -10,20 +10,31 @@ import (
 )
 
 type HookData struct {
-  TTY string `json:tty` // Calling interface name
-  PPPName string `json:pppname` // ppp0 etc.
-  ExternalIP string `json:externalIP`
-  RemotePeerIP string `json:remotePeerIP`
-  Speed int32 `json:speed` // usually 0
-  ipparam string `json:ipparam` // arbitrary data
+	TTY          string `json:tty`     // Calling interface name
+	PPPName      string `json:pppname` // ppp0 etc.
+	ExternalIP   string `json:externalIP`
+	RemotePeerIP string `json:remotePeerIP`
+	Speed        int32  `json:speed`   // usually 0
+	ipparam      string `json:ipparam` // arbitrary data
 }
 
+const UP_IPV4 = 1
+const UP_IPV6 = 2
+const DOWN_IPV4 = 3
+const DOWN_IPV6 = 4
+
+var cfToken string
+var cfMail string
 var zoneIDs map[string]string
 var DNSRecords map[string]string
 var user cloudflare.User
 var api *cloudflare.API
+var initialized bool
 
-func Init(cfMail string, cfToken string) error {
+func initialize() error {
+	if initialized {
+		return nil
+	}
 	zoneIDs = map[string]string{}
 	DNSRecords = map[string]string{}
 	var err error
@@ -37,6 +48,11 @@ func Init(cfMail string, cfToken string) error {
 	}
 	fmt.Println(user)
 	return nil
+}
+
+func Init(CloudflareMail string, CloudflareToken string) {
+	cfToken = CloudflareToken
+	cfMail = CloudflareMail
 }
 
 func FetchZoneID(zoneName string) (string, error) {
@@ -87,43 +103,84 @@ func throw(w http.ResponseWriter, err error) {
 	log.Errorf("Error during execution: %v", err)
 }
 
-func HookUp (w http.ResponseWriter, r *http.Request) {
+var up_ipv4 *HookData
+
+func TryExec() {
+	if up_ipv4 != nil {
+		data := &up_ipv4
+		zoneID, err := FetchZoneID("t4cc0.re")
+		if err != nil {
+			return
+		}
+
+		records := []string{"current.t4cc0.re"}
+		for _, record := range records {
+			recID, err := FetchDNSRecordID(zoneID, record)
+			if err != nil {
+				return
+			}
+
+			err = UpdateDNSRecord(zoneID, recID, (*data).ExternalIP, false, 120)
+			if err != nil {
+				return
+			}
+		}
+	}
+}
+
+func Schedule(kind int, data *HookData) {
+	if kind == UP_IPV4 {
+		up_ipv4 = data
+	}
+}
+
+func DataFromRequest(r *http.Request) (*HookData, error) {
 	var data HookData
 
 	if r.Body == nil {
-		http.Error(w, "No body", 400)
-		return
+		return nil, errors.New("no body")
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		throw(w, err)
+		return nil, err
+	}
+	return &data, nil
+}
+
+func HookUp(w http.ResponseWriter, r *http.Request) {
+	if err := initialize(); err != nil {
+		http.Error(w, "not ready", 503)
 		return
 	}
-
-	zoneID, err := FetchZoneID("t4cc0.re")
+	data, err := DataFromRequest(r)
 	if err != nil {
 		throw(w, err)
+	}
+
+	Schedule(UP_IPV4, data)
+	go w.WriteHeader(206)
+	TryExec()
+}
+
+func HookDown(w http.ResponseWriter, r *http.Request) {
+	if err := initialize(); err != nil {
+		http.Error(w, "not ready", 503)
 		return
 	}
-
-	records := []string{"current.t4cc0.re"}
-	for _, record := range records {
-		recID, err := FetchDNSRecordID(zoneID, record)
-		if err != nil {
-			throw(w, err)
-			return
-		}
-
-		err = UpdateDNSRecord(zoneID, recID, data.ExternalIP, false, 120)
-		if err != nil {
-			throw(w, err)
-			return
-		}
-	}
-
 	w.WriteHeader(200)
 }
-func HookDown (w http.ResponseWriter, r *http.Request) {}
-func HookUp6 (w http.ResponseWriter, r *http.Request) {}
-func HookDown6 (w http.ResponseWriter, r *http.Request) {}
+func HookUp6(w http.ResponseWriter, r *http.Request) {
+	if err := initialize(); err != nil {
+		http.Error(w, "not ready", 503)
+		return
+	}
+	w.WriteHeader(200)
+}
+func HookDown6(w http.ResponseWriter, r *http.Request) {
+	if err := initialize(); err != nil {
+		http.Error(w, "not ready", 503)
+		return
+	}
+	w.WriteHeader(200)
+}

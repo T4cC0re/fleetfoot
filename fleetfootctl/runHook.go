@@ -21,7 +21,7 @@ type HookData struct {
 
 func runHook() (bool, int) {
 	invoked := os.Args[0]
-	regex := regexp.MustCompile(`(?m)(ip(?:v6)?-(?:up|down))\.d/`)
+	regex := regexp.MustCompile(`(?m)(ip(?:v6)?-(?:up|down))\.d`)
 	matches := regex.FindStringSubmatch(invoked)
 	if matches == nil || len(matches) < 2 {
 		return false, 0
