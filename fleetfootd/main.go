@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"./hookSystem"
 )
 
 var sockPath = flag.String("sockpath", "/var/run/fleetfootd.sock", "Socket to listen on")
@@ -25,6 +26,7 @@ var hookedInterfaces6 = map[string]string{}
 var dbusConn *dbus.Conn
 
 func _404(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(404)
 }
 
 func reload(notify bool) {
@@ -62,6 +64,7 @@ func reload(notify bool) {
 		sdnotify.Ready()
 	}
 }
+
 func main() {
 	flag.Parse()
 	os.Remove(*sockPath)
@@ -78,13 +81,10 @@ func main() {
 	info, err := dbusConn.GetUnitProperties("not-a-docker.service")
 	log.Println(info["LoadState"], err)
 
-	demo()
+	//demo()
 
 	http.HandleFunc("/", _404)
-	http.HandleFunc("/pppd/hook/up", pppoe.HookUp)
-	http.HandleFunc("/pppd/hook/down", pppoe.HookDown)
-	http.HandleFunc("/pppd/hook/up6", pppoe.HookUp6)
-	http.HandleFunc("/pppd/hook/down6", pppoe.HookDown6)
+	http.HandleFunc("/hook/", hookSystem.RunWWW)
 
 	reload(false)
 
@@ -93,6 +93,7 @@ func main() {
 		go http.ListenAndServe(fmt.Sprintf(":%d", *debugPort), nil)
 	}
 	go http.Serve(unixListener, nil)
+
 	// Talks to sd_notify, sets up reloading and watchdog
 	enterSystemdLifecycle()
 }
@@ -128,5 +129,6 @@ func enterSystemdLifecycle() {
 	}
 
 	sdnotify.Stopping()
+	//TODO: Group everything that has to be shut down
 	log.Println("exiting...")
 }

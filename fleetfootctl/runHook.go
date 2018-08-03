@@ -36,13 +36,13 @@ func runHook() (bool, int) {
 	var url string
 	switch matches[1] {
 	case "ip-up":
-		url = "http://_/pppd/hook/up"
+		url = "http://_/hook/up_ipv4"
 	case "ip-up6":
-		url = "http://_/pppd/hook/up6"
+		url = "http://_/hook/up_ipv6"
 	case "ip-down":
-		url = "http://_/pppd/hook/down"
+		url = "http://_/hook/down_ipv4"
 	case "ip-down6":
-		url = "http://_/pppd/hook/down6"
+		url = "http://_/hook/down_ipv6"
 	default:
 		fmt.Println("unknown hook. Not running")
 		return false, 0

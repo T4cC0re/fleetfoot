@@ -1,11 +1,11 @@
 package pppoe
 
 import (
-	"net/http"
 	"github.com/prometheus/common/log"
-	"github.com/cloudflare/cloudflare-go"
+	"github.com/jacobbednarz/cloudflare-go"
 	"github.com/pkg/errors"
 	"fmt"
+	"../hookSystem"
 	"encoding/json"
 )
 
@@ -17,11 +17,6 @@ type HookData struct {
 	Speed        int32  `json:speed`   // usually 0
 	ipparam      string `json:ipparam` // arbitrary data
 }
-
-const UP_IPV4 = 1
-const UP_IPV6 = 2
-const DOWN_IPV4 = 3
-const DOWN_IPV6 = 4
 
 var cfToken string
 var cfMail string
@@ -53,6 +48,8 @@ func initialize() error {
 func Init(CloudflareMail string, CloudflareToken string) {
 	cfToken = CloudflareToken
 	cfMail = CloudflareMail
+
+	hookSystem.AddHook("up_ipv4", HookUp)
 }
 
 func FetchZoneID(zoneName string) (string, error) {
@@ -98,89 +95,60 @@ func UpdateDNSRecord(zoneID string, recordID string, content string, proxied boo
 	return nil
 }
 
-func throw(w http.ResponseWriter, err error) {
-	http.Error(w, "Error during execution", 500)
-	log.Errorf("Error during execution: %v", err)
-}
-
-var up_ipv4 *HookData
-
-func TryExec() {
-	if up_ipv4 != nil {
-		data := &up_ipv4
-		zoneID, err := FetchZoneID("t4cc0.re")
-		if err != nil {
-			return
-		}
-
-		records := []string{"current.t4cc0.re"}
-		for _, record := range records {
-			recID, err := FetchDNSRecordID(zoneID, record)
-			if err != nil {
-				return
-			}
-
-			err = UpdateDNSRecord(zoneID, recID, (*data).ExternalIP, false, 120)
-			if err != nil {
-				return
-			}
-		}
-	}
-}
-
-func Schedule(kind int, data *HookData) {
-	if kind == UP_IPV4 {
-		up_ipv4 = data
-	}
-}
-
-func DataFromRequest(r *http.Request) (*HookData, error) {
-	var data HookData
-
-	if r.Body == nil {
-		return nil, errors.New("no body")
+func HookUp(data interface{}) (interface{}, error) {
+	if err := initialize(); err != nil {
+		return nil, err
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&data)
+	var raw []byte
+	var ok bool
+	if raw, ok = data.([]byte); !ok {
+		return nil, hookSystem.EInvalidPayload
+	}
+
+	var hookData HookData
+	err := json.Unmarshal(raw, &hookData)
+
 	if err != nil {
 		return nil, err
 	}
-	return &data, nil
-}
 
-func HookUp(w http.ResponseWriter, r *http.Request) {
-	if err := initialize(); err != nil {
-		http.Error(w, "not ready", 503)
-		return
-	}
-	data, err := DataFromRequest(r)
+	zoneID, err := FetchZoneID("t4cc0.re")
 	if err != nil {
-		throw(w, err)
+		return nil, err
 	}
 
-	Schedule(UP_IPV4, data)
-	go w.WriteHeader(206)
-	TryExec()
-}
+	apps, err := api.SpectrumApplications(zoneID)
+	if err != nil {
+		return nil, err
+	}
+	for _, app := range apps {
+		if app.DNS.Name == "ssh.t4cc0.re" {
+			log.Infoln(app.OriginDirect)
+			direct := fmt.Sprintf("tcp://%s:1337", hookData.ExternalIP)
+			AppId := app.ID
+			app.OriginDirect = []string{direct}
+			app.ID = ""
+			log.Infoln(app.OriginDirect)
+			_, err := api.UpdateSpectrumApplication(zoneID, AppId, app)
+			if err != nil {
+				log.Errorln(err)
+			}
+		}
+	}
 
-func HookDown(w http.ResponseWriter, r *http.Request) {
-	if err := initialize(); err != nil {
-		http.Error(w, "not ready", 503)
-		return
+	records := []string{"current.t4cc0.re"}
+	for _, record := range records {
+		recID, err := FetchDNSRecordID(zoneID, record)
+		if err != nil {
+			return nil, err
+		}
+
+		err = UpdateDNSRecord(zoneID, recID, hookData.ExternalIP, false, 120)
+		if err != nil {
+			return nil, err
+		}
 	}
-	w.WriteHeader(200)
-}
-func HookUp6(w http.ResponseWriter, r *http.Request) {
-	if err := initialize(); err != nil {
-		http.Error(w, "not ready", 503)
-		return
-	}
-	w.WriteHeader(200)
-}
-func HookDown6(w http.ResponseWriter, r *http.Request) {
-	if err := initialize(); err != nil {
-		http.Error(w, "not ready", 503)
-		return
-	}
-	w.WriteHeader(200)
+
+	return true, nil
 }
