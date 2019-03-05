@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./pppoe"
+	"gitlab.com/T4cC0re/fleetfoot/daemon/pppoe"
 	"flag"
 	"fmt"
 	"github.com/coreos/go-systemd/dbus"
@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"./hookSystem"
+	"gitlab.com/T4cC0re/fleetfoot/daemon/hookSystem"
 )
 
 var sockPath = flag.String("sockpath", "/var/run/fleetfootd.sock", "Socket to listen on")

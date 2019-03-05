@@ -2,21 +2,13 @@ package pppoe
 
 import (
 	"github.com/prometheus/common/log"
-	"github.com/jacobbednarz/cloudflare-go"
+	"github.com/cloudflare/cloudflare-go"
 	"github.com/pkg/errors"
 	"fmt"
-	"../hookSystem"
+	"gitlab.com/T4cC0re/fleetfoot/daemon/hookSystem"
+	"gitlab.com/T4cC0re/fleetfoot/shared"
 	"encoding/json"
 )
-
-type HookData struct {
-	TTY          string `json:tty`     // Calling interface name
-	PPPName      string `json:pppname` // ppp0 etc.
-	ExternalIP   string `json:externalIP`
-	RemotePeerIP string `json:remotePeerIP`
-	Speed        int32  `json:speed`   // usually 0
-	ipparam      string `json:ipparam` // arbitrary data
-}
 
 var cfToken string
 var cfMail string
@@ -106,7 +98,7 @@ func HookUp(data interface{}) (interface{}, error) {
 		return nil, hookSystem.EInvalidPayload
 	}
 
-	var hookData HookData
+	var hookData shared.HookData
 	err := json.Unmarshal(raw, &hookData)
 
 	if err != nil {

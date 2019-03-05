@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gitlab.com/T4cC0re/fleetfoot/shared"
 	"os"
 	"bytes"
 	"encoding/json"
@@ -9,15 +10,6 @@ import (
 	"regexp"
 	"strconv"
 )
-
-type HookData struct {
-	TTY          string `json:tty`     // Calling interface name
-	PPPName      string `json:pppname` // ppp0 etc.
-	ExternalIP   string `json:externalIP`
-	RemotePeerIP string `json:remotePeerIP`
-	Speed        int32  `json:speed`   // usually 0
-	ipparam      string `json:ipparam` // arbitrary data
-}
 
 func runHook() (bool, int) {
 	invoked := os.Args[0]
@@ -51,13 +43,13 @@ func runHook() (bool, int) {
 
 	speed, err := strconv.ParseInt(os.Args[3], 10, 32)
 
-	u := HookData{
+	u := shared.HookData{
 		TTY:          os.Args[2],
 		PPPName:      os.Args[1],
 		ExternalIP:   os.Args[4],
 		RemotePeerIP: os.Args[5],
 		Speed:        int32(speed),
-		ipparam:      "",
+		Ipparam:      "",
 	}
 
 	fmt.Println(u)

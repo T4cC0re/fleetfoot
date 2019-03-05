@@ -2,5 +2,5 @@ inventory.yml
 *.retry
 .idea
 netconf.yml
-fleetfootd/fleetfootd
-fleetfootctl/fleetfootctl
+bin
+miniupnp
