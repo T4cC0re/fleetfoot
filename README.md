@@ -8,6 +8,8 @@
 
    ...Arch Linux based routing made easy
 ```
+*This repo is primarily hosted on [gitlab.com](https://gitlab.com/T4cC0re/sonicrainboom). Please go there to raise issues or contribute.*
+
 
 #### Why?
 
